@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PluginDescriptor>
+	<WebModulePlugin>
+		<identifier>oauthclienttest</identifier>
+		<name>OAuth Client Test</name>
+		<description>Testing BIMserver OAuth access for web-clients</description>
+	</WebModulePlugin>
+</PluginDescriptor>
