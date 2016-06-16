@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OAuth Client Test</title>
 <link href="css/bootstrap.min.css" rel="stylesheet">
-<link rel="icon" type="image/png" href="img/sport_raquet.png">
+<link rel="icon" type="image/png" href="img/image_link.png">
 </head>
 <body>
 	<div class="well">
@@ -68,7 +68,7 @@ if (QueryString.code != null) {
 		request: {
 			interface: "ServiceInterface",
 			method: "getProjectByPoid",
-			arguments: {
+			parameters: {
 				poid: poid
 			}
 		}
@@ -79,16 +79,23 @@ if (QueryString.code != null) {
 
 $(".btnBegin").click(function(){
 	var baseUrl = $(".endpointInp").val();
+	
+	var getUrl = window.location;
+	var clientBaseUrl = getUrl.protocol + "//" + getUrl.host + getUrl.pathname;
+	
+	var iconUrl = clientBaseUrl + "img/image_link.png";
+	console.log(iconUrl);
+	
 	post(baseUrl + "/oauth/register", {
 		redirect_url: document.location.href,
 		client_name: "test",
 		client_description: "test",
-		client_icon: "test",
+		client_icon:  iconUrl,
 		client_url: "test",
 		type: "pull"
 	}, function(response){
 		var json = JSON.parse(response);
-		document.location = baseUrl + "/oauth/" + "?redirect_uri=" + document.location + "&response_type=code&client_id=" + json.client_id;
+		document.location = baseUrl + "/oauth/" + "?redirect_uri=" + document.location + "&response_type=code&client_id=" + json.client_id + "&auth_type=singleproject";
 	});
 });
 </script>
