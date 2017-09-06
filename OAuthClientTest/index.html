@@ -6,20 +6,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OAuth Client Test</title>
 <link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="css/main.css" rel="stylesheet">
 <link rel="icon" type="image/png" href="img/image_link.png">
 </head>
 <body>
-	<div class="well">
-		This small test application should redirect to your BIMserver, ask for authentication, return to this site and then use the given authentication to access a BIMserver project and show some details.
-	</div>
 	<div class="container">
-		<div class="initial">
-			BIMserver Address
-			<input class="form-control endpointInp" placeholder="http://localhost:8080"/>
-			<button class="btn btn-primary btnBegin">Begin</button>
+		<div style="margin-top: 20px"></div>
+		<div class="jumbotron">
+			<h1>Use OAuth to authenticate on BIMserver</h1>
+			<p>
+			This small test application should redirect to your BIMserver, ask for authentication, return to this site and then use the given authentication to access a BIMserver project and show some details.
+			</p>
+			<a class="startOauth btn btn-primary btn-lg">OAuth Demo</a>
 		</div>
-		<div class="projectDetails">
-		
+		<div class="jumbotron">
+			<h1>BIMserver as service runner</h1>
+			<p>
+			Select a service on a BIMserver and run it by sending a file, the results will be downloadable.
+			</p>
+			<a class="startService btn btn-primary btn-lg">Service Demo</a>
+		</div>
+		<div class="ih oauth">
+			<div class="initial">
+				BIMserver Address
+				<input class="form-control endpointInp" placeholder="http://localhost:8080"/>
+				<button class="btn btn-primary btnBegin">Begin</button>
+			</div>
+			<div class="projectDetails">
+			
+			</div>
+		</div>
+		<div class="ih service">
+			<div class="initial">
+				BIMserver Address
+				<input class="form-control endpointInp" placeholder="http://localhost:8080"/>
+				<button class="btn btn-primary btnBeginService">Begin</button>
+			</div>
+			<div class="serviceDetails ih">
+				<div class="details"></div>
+				<input class="fileInp form-control" type="file"/>
+				<button class="btn btn-primary uploadFileBtn">Send to service</button>
+				<div class="output ih">
+					<div class="outputType"></div>
+					<div class="outputSize"></div>
+					<div class="outputContentType"></div>
+					<pre class="formatted"></pre>
+				</div>
+			</div>
 		</div>
 	</div>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -28,28 +61,116 @@
 </body>
 <script>
 
+var Global = {};
+
 if (QueryString.code != null) {
+	Global.code = QueryString.code;
 	var oauthCode = QueryString.code;
 	var bimServerAddress = QueryString.address;
 	var poid = QueryString.poid;
-	post(bimServerAddress, {
-		oauthcode: oauthCode,
-		request: {
-			interface: "ServiceInterface",
-			method: "getProjectByPoid",
-			parameters: {
-				poid: poid
+	var soid = QueryString.soid;
+	$(".jumbotron").hide();
+	$(".oauth").show();
+	if (poid != null) {
+		post(bimServerAddress, {
+			oauthcode: oauthCode,
+			request: {
+				interface: "ServiceInterface",
+				method: "getProjectByPoid",
+				parameters: {
+					poid: poid
+				}
 			}
-		}
-	}, function(response){
-		var project = response.response.result;
-		$(".initial").hide();
-		$(".projectDetails").append("Project name: " + project.name);
-	});
+		}, function(response){
+			var project = response.response.result;
+			$(".initial").hide();
+			$(".oauth .projectDetails").append("Project name: " + project.name);
+		});
+	} else if (soid != null) {
+		Global.soid = soid;
+		post(bimServerAddress, {
+			oauthcode: oauthCode,
+			request: {
+				interface: "PluginInterface",
+				method: "getInternalServiceById",
+				parameters: {
+					oid: soid
+				}
+			}
+		}, function(response){
+			var service = response.response.result;
+			$(".service").show();
+			$(".oauth").hide();
+			$(".serviceDetails").show();
+			$(".service .initial").hide();
+			$(".service .serviceDetails .details").append("Service name: " + service.name);
+		});
+	}
 }
 
+$(".uploadFileBtn").click(function(){
+	var file = $(".fileInp").get(0).files[0];
+	$.ajax({
+        url: "/services/" + Global.soid,
+        type: "POST",
+        data: file,
+        headers: {
+        	"Input-Type": "IFC_STEP_2X3TC1",
+        	"Token": Global.code
+        },
+        processData: false,
+        success: function(data, textStatus, request){
+            var output = request.getResponseHeader("Output-Type");
+           	var contentType = request.getResponseHeader("Content-Type");
+           	$(".output .outputType").html("Output-Type: " + output);
+           	$(".output .outputSize").html("Content-Length: " + request.getResponseHeader("Content-Length"));
+           	$(".output .outputContentType").html("Content-Type: " + contentType);
+           	$(".output").show();
+            if (output == "VALIDATION_JSON_1_0") {
+               	$(".output .formatted").html(JSON.stringify(data, null, '\t'));
+            } else {
+            	console.log(contentType);
+            	if (contentType.indexOf("text/plain") != -1) {
+	               	$(".output .formatted").html("Output Data:\n" + data);
+            	}
+            }
+       },
+    });
+});
+
+$(".startOauth").click(function(){
+	$(".jumbotron").hide();
+	$(".oauth").show();
+});
+
+$(".startService").click(function(){
+	$(".jumbotron").hide();
+	$(".service").show();
+});
+
+$(".btnBeginService").click(function(){
+	var baseUrl = $(".service .endpointInp").val();
+	
+	var getUrl = window.location;
+	var clientBaseUrl = getUrl.protocol + "//" + getUrl.host + getUrl.pathname;
+	
+	var iconUrl = clientBaseUrl + "img/image_link.png";
+
+	post(baseUrl + "/oauth/register", {
+		redirect_url: document.location.href,
+		client_name: "test",
+		client_description: "test",
+		client_icon:  iconUrl,
+		client_url: "test",
+		type: "pull"
+	}, function(response){
+		var json = JSON.parse(response);
+		document.location = baseUrl + "/oauth/authorize" + "?redirect_uri=" + document.location + "&response_type=code&client_id=" + json.client_id + "&auth_type=service";
+	});
+});
+
 $(".btnBegin").click(function(){
-	var baseUrl = $(".endpointInp").val();
+	var baseUrl = $(".oauth .endpointInp").val();
 	
 	var getUrl = window.location;
 	var clientBaseUrl = getUrl.protocol + "//" + getUrl.host + getUrl.pathname;
@@ -65,7 +186,7 @@ $(".btnBegin").click(function(){
 		type: "pull"
 	}, function(response){
 		var json = JSON.parse(response);
-		document.location = baseUrl + "/oauth/" + "?redirect_uri=" + document.location + "&response_type=code&client_id=" + json.client_id + "&auth_type=singleproject";
+		document.location = baseUrl + "/oauth/authorize" + "?redirect_uri=" + document.location + "&response_type=code&client_id=" + json.client_id + "&auth_type=singleproject";
 	});
 });
 </script>
