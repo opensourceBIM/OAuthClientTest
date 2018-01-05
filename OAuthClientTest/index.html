@@ -39,8 +39,14 @@
 		<div class="ih service">
 			<div class="initial">
 				BIMserver Address
-				<input class="form-control endpointInp" placeholder="http://localhost:8080"/>
+				<input class="form-control endpointInp" placeholder="http://localhost:8080" value="http://localhost:8080"/>
 				<button class="btn btn-primary btnBeginService">Begin</button>
+			</div>
+			<div class="servicelist">
+				<table class="table">
+					<thead></thead>
+					<tbody></tbody>
+				</table>
 			</div>
 			<div class="serviceDetails ih">
 				<div class="details"></div>
@@ -140,9 +146,10 @@ $(".uploadFileBtn").click(function(){
             if (output == "VALIDATION_JSON_1_0") {
                	$(".output .formatted").html(JSON.stringify(data, null, '\t'));
             } else {
-            	console.log(contentType);
             	if (contentType.indexOf("text/plain") != -1) {
 	               	$(".output .formatted").html("Output Data:\n" + data);
+            	} else if (contentType.indexOf("json") != -1) {
+	               	$(".output .formatted").html("Output Data:\n" + JSON.stringify(data, 0, 2));
             	}
             }
        },
@@ -176,7 +183,25 @@ $(".btnBeginService").click(function(){
 		type: "pull"
 	}, function(response){
 		var json = JSON.parse(response);
-		document.location = baseUrl + "/oauth/authorize" + "?redirect_uri=" + document.location + "&response_type=code&client_id=" + json.client_id + "&auth_type=service";
+		$.ajax({
+			url: baseUrl + "/servicelist",
+		}).done(function(data){
+			data.services.forEach(function(service){
+				var tr = $("<tr>");
+				tr.append("<td>" + service.name + "</td>");
+				var btn = $("<button>Use</button>");
+				btn.click(function(){
+					var state = {
+						_serviceName: service.name
+					};
+					document.location = baseUrl + "/oauth/authorize" + "?redirect_uri=" + document.location + "&response_type=code&client_id=" + json.client_id + "&auth_type=service&state=" + encodeURIComponent(JSON.stringify(state));		
+				});
+				var td = $("<td>");
+				td.append(btn);
+				tr.append(td);
+				$(".servicelist table tbody").append(tr);
+			});
+		});
 	});
 });
 
