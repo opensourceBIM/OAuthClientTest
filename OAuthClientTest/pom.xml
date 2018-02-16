@@ -11,27 +11,24 @@
 	<build>
 		<resources>
 			<resource>
-				<directory>../../output</directory>
-			</resource>
-			<resource>
 				<directory>plugin</directory>
 				<targetPath>plugin</targetPath>
 			</resource>
 			<resource>
-				<directory>images</directory>
-				<targetPath>images</targetPath>
+				<directory>img</directory>
+				<targetPath>img</targetPath>
+			</resource>
+			<resource>
+				<directory>js</directory>
+				<targetPath>js</targetPath>
+			</resource>
+			<resource>
+				<directory>fonts</directory>
+				<targetPath>fonts</targetPath>
 			</resource>
 			<resource>
 				<directory>css</directory>
 				<targetPath>css</targetPath>
-			</resource>
-			<resource>
-				<directory>api</directory>
-				<targetPath>api</targetPath>
-			</resource>
-			<resource>
-				<directory>lib</directory>
-				<targetPath>lib</targetPath>
 			</resource>
 		</resources>
 		<plugins>
@@ -127,27 +124,15 @@
 		</profile>
 	</profiles>
 	<distributionManagement>
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
-	<dependencies>
-		<dependency>
-			<groupId>org.opensourcebim</groupId>
-			<artifactId>bimserverapi</artifactId>
-			<version>0.0.83</version>
-		</dependency>
-	</dependencies>
 	<scm>
-		<url>https://github.com/opensourceBIM/BIMsurfer.git</url>
-		<connection>scm:git:https://github.com/opensourceBIM/BIMsurfer.git</connection>
-		<developerConnection>scm:git:https://github.com/opensourceBIM/BIMsurfer.git</developerConnection>
-	  <tag>bimsurfer-0.0.15</tag>
+		<url>https://github.com/opensourceBIM/OAuthClientTest.git</url>
+		<connection>scm:git:https://github.com/opensourceBIM/OAuthClientTest.git</connection>
+		<developerConnection>scm:git:https://github.com/opensourceBIM/OAuthClientTest.git</developerConnection>
   </scm>
 	<organization>
 		<name>OpenSource BIM</name>
@@ -155,10 +140,10 @@
 	</organization>
 	<issueManagement>
 		<system>GitHub</system>
-		<url>https://github.com/opensourceBIM/BIMsurfer/issues</url>
+		<url>https://github.com/opensourceBIM/OAuthClientTest/issues</url>
 	</issueManagement>
-	<name>BIMsurfer</name>
-	<url>https://github.com/opensourceBIM/BIMsurfer</url>
+	<name>OAuthClientTest</name>
+	<url>https://github.com/opensourceBIM/OAuthClientTest</url>
 	<licenses>
 		<license>
 			<name>GNU Affero General Public License</name>
