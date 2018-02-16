@@ -58,6 +58,7 @@
 				  </div>
 				</div>
 				<div class="output ih">
+					<div class="dataTitle"></div>
 					<div class="outputType"></div>
 					<div class="outputSize"></div>
 					<div class="outputContentType"></div>
@@ -66,7 +67,7 @@
 			</div>
 		</div>
 	</div>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+	<script src="js/jquery-2.2.0.js"></script>
 	<script src="js/bootstrap.min.js"></script>
 	<script src="js/utils.js"></script>
 </body>
@@ -124,8 +125,9 @@ $(".uploadFileBtn").click(function(){
 	$(".progress").show();
 	$(".uploadFileBtn").hide();
 	$(".fileInp").hide();
+	var serviceAddress = QueryString.serviceaddress;
 	$.ajax({
-        url: "/services/" + Global.soid,
+        url: serviceAddress + "/" + Global.soid,
         type: "POST",
         data: file,
         headers: {
@@ -141,6 +143,7 @@ $(".uploadFileBtn").click(function(){
         	$(".fileInp").show();
            	$(".output .outputType").html("Output-Type: " + output);
            	$(".output .outputSize").html("Content-Length: " + request.getResponseHeader("Content-Length"));
+           	$(".output .dataTitle").html("Data-Title: " + request.getResponseHeader("Data-Title"));
            	$(".output .outputContentType").html("Content-Type: " + contentType);
            	$(".output").show();
             if (output == "VALIDATION_JSON_1_0") {
@@ -168,6 +171,9 @@ $(".startService").click(function(){
 
 $(".btnBeginService").click(function(){
 	var baseUrl = $(".service .endpointInp").val();
+	if (baseUrl.endsWith("/")) {
+		baseUrl = baseUrl.substring(0, baseUrl.length - 1);
+	}
 	
 	var getUrl = window.location;
 	var clientBaseUrl = getUrl.protocol + "//" + getUrl.host + getUrl.pathname;
@@ -186,15 +192,17 @@ $(".btnBeginService").click(function(){
 		$.ajax({
 			url: baseUrl + "/servicelist",
 		}).done(function(data){
+			$(".servicelist table tbody tr").remove();
 			data.services.forEach(function(service){
 				var tr = $("<tr>");
 				tr.append("<td>" + service.name + "</td>");
 				var btn = $("<button>Use</button>");
+				btn.addClass("btn").addClass("btn-primary");
 				btn.click(function(){
 					var state = {
 						_serviceName: service.name
 					};
-					document.location = baseUrl + "/oauth/authorize" + "?redirect_uri=" + document.location + "&response_type=code&client_id=" + json.client_id + "&auth_type=service&state=" + encodeURIComponent(JSON.stringify(state));		
+					document.location = baseUrl + "/oauth/authorize" + "?redirect_uri=" + encodeURIComponent(document.location) + "&response_type=code&client_id=" + json.client_id + "&auth_type=service&state=" + encodeURIComponent(JSON.stringify(state));		
 				});
 				var td = $("<td>");
 				td.append(btn);
@@ -204,6 +212,12 @@ $(".btnBeginService").click(function(){
 		});
 	});
 });
+
+function fixedEncodeURIComponent(str) {
+	  return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
+	    return '%' + c.charCodeAt(0).toString(16);
+	  });
+	}
 
 $(".btnBegin").click(function(){
 	var baseUrl = $(".oauth .endpointInp").val();
