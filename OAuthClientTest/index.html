@@ -51,6 +51,7 @@
 			<div class="serviceDetails ih">
 				<div class="details"></div>
 				<input class="fileInp form-control" type="file"/>
+				Context-Id (optional): <input class="contextId" type="text"/>
 				<button class="btn btn-primary uploadFileBtn">Send to service</button>
 				<div class="progress ih" style="margin-top: 10px; margin-bottom: 10px">
 				  <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
@@ -58,10 +59,7 @@
 				  </div>
 				</div>
 				<div class="output ih">
-					<div class="dataTitle"></div>
-					<div class="outputType"></div>
-					<div class="outputSize"></div>
-					<div class="outputContentType"></div>
+					<pre class="httpHeaders"></pre>
 					<pre class="formatted"></pre>
 				</div>
 			</div>
@@ -126,25 +124,30 @@ $(".uploadFileBtn").click(function(){
 	$(".uploadFileBtn").hide();
 	$(".fileInp").hide();
 	var serviceAddress = QueryString.serviceaddress;
+	
+	var headers = {
+    	"Input-Type": "IFC_STEP_2X3TC1",
+    	"Token": Global.code
+	};
+	
+	var contextId = $(".contextId").val();
+	if (contextId != "") {
+		headers["Context-Id"] = contextId;
+	}
+	
 	$.ajax({
         url: serviceAddress + "/" + Global.soid,
         type: "POST",
         data: file,
-        headers: {
-        	"Input-Type": "IFC_STEP_2X3TC1",
-        	"Token": Global.code
-        },
+        headers: headers,
         processData: false,
         success: function(data, textStatus, request){
             var output = request.getResponseHeader("Output-Type");
-           	var contentType = request.getResponseHeader("Content-Type");
+            var contentType = request.getResponseHeader("Content-Type");
         	$(".progress").hide();
         	$(".uploadFileBtn").show();
         	$(".fileInp").show();
-           	$(".output .outputType").html("Output-Type: " + output);
-           	$(".output .outputSize").html("Content-Length: " + request.getResponseHeader("Content-Length"));
-           	$(".output .dataTitle").html("Data-Title: " + request.getResponseHeader("Data-Title"));
-           	$(".output .outputContentType").html("Content-Type: " + contentType);
+        	$(".output .httpHeaders").html("HTTP Headers:\n" + request.getAllResponseHeaders());
            	$(".output").show();
             if (output == "VALIDATION_JSON_1_0") {
                	$(".output .formatted").html(JSON.stringify(data, null, '\t'));
