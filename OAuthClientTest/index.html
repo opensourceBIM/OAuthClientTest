@@ -53,10 +53,7 @@
 				<input class="fileInp form-control" type="file"/>
 				Context-Id (optional): <input class="contextId" type="text"/>
 				<button class="btn btn-primary uploadFileBtn">Send to service</button>
-				<div class="progress ih" style="margin-top: 10px; margin-bottom: 10px">
-				  <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
-				    <span>Running...</span>
-				  </div>
+				<div class="progressHolder">
 				</div>
 				<div class="output ih">
 					<pre class="httpHeaders"></pre>
@@ -72,6 +69,8 @@
 <script>
 
 var Global = {};
+
+var webSocketEnabled = false;
 
 if (QueryString.code != null) {
 	Global.code = QueryString.code;
@@ -120,13 +119,12 @@ if (QueryString.code != null) {
 
 $(".uploadFileBtn").click(function(){
 	var file = $(".fileInp").get(0).files[0];
-	$(".progress").show();
 	$(".uploadFileBtn").hide();
 	$(".fileInp").hide();
 	var serviceAddress = QueryString.serviceaddress;
 	
 	var headers = {
-    	"Input-Type": "IFC_STEP_2X3TC1",
+    	"Input-Type": "IFC_STEP",
     	"Token": Global.code
 	};
 	
@@ -135,6 +133,99 @@ $(".uploadFileBtn").click(function(){
 		headers["Context-Id"] = contextId;
 	}
 	
+	if (QueryString.websocketUrl != null) {
+		$(".progress-bar").removeClass("progress-bar-striped");
+		$(".progress-bar").css("width", "0%");
+		$(".progress").show();
+		var webSocket = new WebSocket(QueryString.websocketUrl);
+		webSocket.onopen = function(){
+			webSocket.send(JSON.stringify({"token": Global.code}));
+		};
+		webSocket.onmessage = function(e){
+			if (typeof e.data == "string") {
+				var message = JSON.parse(e.data);
+				var topicId = message.topicId;
+				if (message.type == "progress") {
+					var progress = message.payload;
+					console.log(progress.label, progress.progress);
+					updateProgress(progress.label, progress.progress);
+				} else if (message.type == "output") {
+					Global.output = message.payload;
+		           	Global.outputType = Global.output.schemaName;
+		           	Global.contentType = Global.output.contentType;
+		        	$(".progress").hide();
+		        	$(".uploadFileBtn").show();
+		        	$(".fileInp").show();
+		        	$(".output .httpHeaders").html(JSON.stringify(Global.output, 0, 2));
+		           	$(".output").show();
+				} else if (message.type == "endpoint") {
+					var endpointMessage = message.payload;
+					// Not using this atm, but it's a good point to trigger the rest
+					continueUpload(serviceAddress, headers, file);
+				} else {
+					console.log("Unimplemented type", message);
+				}
+			} else {
+				var reader = new FileReader();
+				reader.addEventListener("loadend", function() {
+					var data = reader.result;
+					data = new TextDecoder("utf-8").decode(data);
+		            if (Global.outputType == "VALIDATION_JSON_1_0") {
+		               	$(".output .formatted").html(JSON.stringify(data, null, '\t'));
+		            } else {
+		            	if (Global.contentType.indexOf("text/plain") != -1) {
+			               	$(".output .formatted").html("Output Data:\n" + data);
+		            	} else if (Global.contentType.indexOf("json") != -1) {
+			               	$(".output .formatted").html("Output Data:\n" + JSON.stringify(data, 0, 2));
+		            	}
+		            }
+				});
+				reader.readAsArrayBuffer(e.data);
+			}
+		};
+	} else {
+		$(".progress").show();
+		continueUpload(serviceAddress, headers, file);
+	}
+});
+
+function updateProgress(title, progress) {
+	if (Global.lastProgressLabel != title) {
+		$(".progress").remove();
+
+		var progressDiv = $("<div>");
+		progressDiv.addClass("progress");
+		progressDiv.css("margin-top: 10px");
+		progressDiv.css("margin-bottom: 10px");
+		
+		var progressBarDiv = $("<div>");
+		progressBarDiv.addClass("progress-bar");
+		progressBarDiv.addClass("progress-bar-striped");
+		if (progress == -1) {
+			progressBarDiv.addClass("active");
+		}
+		
+		progressBarDiv.attr("role", "progressbar");
+		progressBarDiv.attr("aria-valuenow", 0);
+		progressBarDiv.attr("aria-valuemin", 0);
+		progressBarDiv.attr("aria-valuemax", 100);
+		
+		var span = $("<span>");
+		progressBarDiv.append(span);
+		
+		progressDiv.append(progressBarDiv);
+		$(".progressHolder").append(progressDiv);
+	}
+	if (progress == -1) {
+		$(".progress-bar").css("width", "100%");
+	} else {
+		$(".progress-bar").css("width", progress + "%");
+	}
+	$(".progress-bar span").html(title);
+	Global.lastProgressLabel = title;
+}
+
+function continueUpload(serviceAddress, headers, file, sync) {
 	$.ajax({
         url: serviceAddress + "/" + Global.soid,
         type: "POST",
@@ -142,25 +233,29 @@ $(".uploadFileBtn").click(function(){
         headers: headers,
         processData: false,
         success: function(data, textStatus, request){
-            var output = request.getResponseHeader("Output-Type");
-            var contentType = request.getResponseHeader("Content-Type");
-        	$(".progress").hide();
-        	$(".uploadFileBtn").show();
-        	$(".fileInp").show();
-        	$(".output .httpHeaders").html("HTTP Headers:\n" + request.getAllResponseHeaders());
-           	$(".output").show();
-            if (output == "VALIDATION_JSON_1_0") {
-               	$(".output .formatted").html(JSON.stringify(data, null, '\t'));
+            if (sync) {
+	            var output = request.getResponseHeader("Output-Type");
+	            var contentType = request.getResponseHeader("Content-Type");
+	        	$(".progress").hide();
+	        	$(".uploadFileBtn").show();
+	        	$(".fileInp").show();
+	        	$(".output .httpHeaders").html("HTTP Headers:\n" + request.getAllResponseHeaders());
+	           	$(".output").show();
+	            if (output == "VALIDATION_JSON_1_0") {
+	               	$(".output .formatted").html(JSON.stringify(data, null, '\t'));
+	            } else {
+	            	if (contentType.indexOf("text/plain") != -1) {
+		               	$(".output .formatted").html("Output Data:\n" + data);
+	            	} else if (contentType.indexOf("json") != -1) {
+		               	$(".output .formatted").html("Output Data:\n" + JSON.stringify(data, 0, 2));
+	            	}
+	            }
             } else {
-            	if (contentType.indexOf("text/plain") != -1) {
-	               	$(".output .formatted").html("Output Data:\n" + data);
-            	} else if (contentType.indexOf("json") != -1) {
-	               	$(".output .formatted").html("Output Data:\n" + JSON.stringify(data, 0, 2));
-            	}
+            	
             }
        },
     });
-});
+}
 
 $(".startOauth").click(function(){
 	$(".jumbotron").hide();
