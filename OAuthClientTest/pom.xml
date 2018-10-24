@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.opensourcebim</groupId>
 	<artifactId>oauthclienttest</artifactId>
-	<version>0.0.4-SNAPSHOT</version>
+	<version>0.0.4</version>
 	<packaging>jar</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -129,7 +129,7 @@
 		<url>https://github.com/opensourceBIM/OAuthClientTest.git</url>
 		<connection>scm:git:https://github.com/opensourceBIM/OAuthClientTest.git</connection>
 		<developerConnection>scm:git:https://github.com/opensourceBIM/OAuthClientTest.git</developerConnection>
-		<tag>HEAD</tag>
+		<tag>oauthclienttest-0.0.4</tag>
 	</scm>
 	<organization>
 		<name>OpenSource BIM</name>
