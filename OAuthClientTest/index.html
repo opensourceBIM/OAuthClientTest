@@ -29,7 +29,7 @@
 		<div class="ih oauth">
 			<div class="initial">
 				BIMserver Address
-				<input class="form-control endpointInp" placeholder="http://localhost:8080"/>
+				<input class="form-control endpointInp"/>
 				<button class="btn btn-primary btnBegin">Begin</button>
 			</div>
 			<div class="projectDetails">
@@ -39,7 +39,7 @@
 		<div class="ih service">
 			<div class="initial">
 				BIMserver Address
-				<input class="form-control endpointInp" placeholder="http://localhost:8080" value="http://localhost:8080"/>
+				<input class="form-control endpointInp"/>
 				<button class="btn btn-primary btnBeginService">Begin</button>
 			</div>
 			<div class="servicelist">
@@ -57,6 +57,7 @@
 				</div>
 				<div class="output ih">
 					<pre class="httpHeaders"></pre>
+					<a class="downloadLink" target="_blank">Download</a>
 					<pre class="formatted"></pre>
 				</div>
 			</div>
@@ -71,6 +72,8 @@
 var Global = {};
 
 var webSocketEnabled = false;
+
+$(".endpointInp").val(document.location.origin);
 
 if (QueryString.code != null) {
 	Global.code = QueryString.code;
@@ -153,10 +156,11 @@ $(".uploadFileBtn").click(function(){
 					Global.output = message.payload;
 		           	Global.outputType = Global.output.schemaName;
 		           	Global.contentType = Global.output.contentType;
+		           	Global.title = Global.output.title;
 		        	$(".progress").hide();
 		        	$(".uploadFileBtn").show();
 		        	$(".fileInp").show();
-		        	$(".output .httpHeaders").html(JSON.stringify(Global.output, 0, 2));
+		        	$(".output .httpHeaders").html("Output Meta Data:\n" + JSON.stringify(Global.output, 0, 2));
 		           	$(".output").show();
 				} else if (message.type == "endpoint") {
 					var endpointMessage = message.payload;
@@ -170,13 +174,18 @@ $(".uploadFileBtn").click(function(){
 				reader.addEventListener("loadend", function() {
 					var data = reader.result;
 					data = new TextDecoder("utf-8").decode(data);
+					
+					var blob = new Blob([data], {type : Global.contentType});
+					$(".downloadLink").attr("href", URL.createObjectURL(blob));
+					$(".downloadLink").attr("download", Global.title);
+					
 		            if (Global.outputType == "VALIDATION_JSON_1_0") {
 		               	$(".output .formatted").html(JSON.stringify(data, null, '\t'));
 		            } else {
 		            	if (Global.contentType.indexOf("text/plain") != -1) {
 			               	$(".output .formatted").html("Output Data:\n" + data);
 		            	} else if (Global.contentType.indexOf("json") != -1) {
-			               	$(".output .formatted").html("Output Data:\n" + JSON.stringify(data, 0, 2));
+			               	$(".output .formatted").html("Output Data:\n" + jsonPrettyPrint.toHtml(JSON.parse(data)));
 		            	}
 		            }
 				});
