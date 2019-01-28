@@ -165,7 +165,8 @@ $(".uploadFileBtn").click(function(){
 				} else if (message.type == "endpoint") {
 					var endpointMessage = message.payload;
 					// Not using this atm, but it's a good point to trigger the rest
-					continueUpload(serviceAddress, headers, file);
+					continueUpload(serviceAddress, headers, file, true);
+				} else if (message.welcome != null) {
 				} else {
 					console.log("Unimplemented type", message);
 				}
@@ -194,7 +195,7 @@ $(".uploadFileBtn").click(function(){
 		};
 	} else {
 		$(".progress").show();
-		continueUpload(serviceAddress, headers, file);
+		continueUpload(serviceAddress, headers, file, true);
 	}
 });
 
@@ -236,7 +237,7 @@ function updateProgress(title, progress) {
 
 function continueUpload(serviceAddress, headers, file, sync) {
 	$.ajax({
-        url: serviceAddress + "/" + Global.soid,
+        url: serviceAddress,
         type: "POST",
         data: file,
         headers: headers,
