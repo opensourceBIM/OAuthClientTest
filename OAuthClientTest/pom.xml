@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.opensourcebim</groupId>
   <artifactId>oauthclienttest</artifactId>
-  <version>0.0.41-SNAPSHOT</version>
+  <version>0.0.41</version>
   <name>OAuthClientTest</name>
   <description>OAuth Client Test</description>
   <url>https://github.com/opensourceBIM/OAuthClientTest</url>
@@ -29,6 +28,7 @@
     <connection>scm:git:https://github.com/opensourceBIM/OAuthClientTest.git</connection>
     <developerConnection>scm:git:https://github.com/opensourceBIM/OAuthClientTest.git</developerConnection>
     <url>https://github.com/opensourceBIM/OAuthClientTest.git</url>
+    <tag>oauthclienttest-0.0.41</tag>
   </scm>
   <issueManagement>
     <system>GitHub</system>
